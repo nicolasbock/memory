@@ -37,7 +37,8 @@ let c = document.getElementById("canvas").getContext("2d");
 /* Preload all images. */
 preload_images().done(function(images) {
 
-    c.drawImage(images[0], 5, 5, 40, 40);
-    c.drawImage(images[1], 55, 5, 40, 40);
+    c.drawImage(images[0], 5, 5, 100, 100);
+    c.drawImage(images[1], 105, 5, 100, 100);
+    c.drawImage(images[2], 210, 5, 100, 100);
 
 })

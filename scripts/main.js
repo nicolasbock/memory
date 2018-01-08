@@ -1,44 +1,87 @@
-function preload_images() {
-    let images = [];
-    let loaded_images = 0;
+/* https://developer.mozilla.org/en-US/docs/Games/Anatomy
+ *
+ * GameData.lastRender
+ *     keeps track of the last provided requestAnimationFrame
+ *     timestamp.
+ * GameData.lastUpdate
+ *     keeps track of the last update time. Always increments by
+ *     updateInterval.
+ * GameData.updateInterval
+ *     is how frequently the game state updates.
+ *
+ * timeSinceUpdate
+ *     is the time between requestAnimationFrame callback and last
+ *     update.
+ * numUpdates
+ *     is how many updates should have happened between these two
+ *     rendered frames.
+ *
+ * render()
+ *     is passed tFrame because it is assumed that the render method
+ *     will calculate how long it has been since the most recently
+ *     passed update for extrapolation (purely cosmetic for fast
+ *     devices). It draws the scene.
+ *
+ * update()
+ *     calculates the game state as of a given point in time. It
+ *     should always increment by updateInterval. It is the authority for
+ *     game state. It is passed the DOMHighResTimeStamp for the time
+ *     it represents (which, again, is always last update +
+ *     GameData.updateInterval unless a pause feature is added, etc.)
+ *
+ * setInitialState()
+ *     Performs whatever tasks are leftover before the mainloop must
+ *     run.
+ */
 
-    let image_files = [
-        "images/Skull.png",
-        "images/House 1.png",
-        "images/House 2.png",
-        "images/House 3.png"
-    ];
+var GameData = {};
 
-    function image_loaded() {
-        loaded_images++;
-        if (loaded_images == image_files.length) {
-            post_loaded(images);
+;(function() {
+    function main(tFrame) {
+        GameData.stopMain = window.requestAnimationFrame(main);
+        var nextUpdate = GameData.lastUpdate + GameData.updateInterval;
+        var numUpdates = 0;
+
+        /* If tFrame < nextUpdate then 0 ticks need to be updated (0
+         * is default for numUpdates).
+         *
+         * If tFrame = nextUpdate then 1 tick needs to be updated (and
+         * so forth).
+         *
+         * Note: As we mention in summary, you should keep track of
+         * how large numUpdates is.  If it is large, then either your
+         * game was asleep, or the machine cannot keep up.
+         */
+        if (tFrame > nextUpdate) {
+            var timeSinceUpdate = tFrame - GameData.lastUpdate;
+            numUpdates = Math.floor(timeSinceUpdate / GameData.updateInterval);
+        }
+
+        queueUpdates(numUpdates);
+        render(tFrame);
+        GameData.lastRender = tFrame;
+    }
+
+    function queueUpdates(numUpdates) {
+        for(var i = 0; i < numUpdates; i++) {
+            GameData.lastUpdate = GameData.lastUpdate + GameData.updateInterval; // Now lastUpdate is this tick.
+            update(GameData.lastUpdate);
         }
     }
 
-    for (i = 0; i < image_files.length; i++) {
-        images.push(new Image())
-        images[i].src = image_files[i];
-        images[i].onload = function() {
-            image_loaded();
-        }
-    }
+    GameData.lastUpdate = performance.now();
+    GameData.lastRender = GameData.lastUpdate; // Pretend the first draw was on first update.
+    GameData.updateInterval = 50; // This sets your simulation to run at 20Hz (50ms)
 
-    return {
-        done:function(f) {
-            post_loaded = f || post_loaded;
-        }
-    }
+    setInitialState();
+    main(performance.now()); // Start the cycle
+})();
+
+function setInitialState() {
 }
 
-/* Get cavas context. */
-let c = document.getElementById("canvas").getContext("2d");
+function update(lastUpdate) {
+}
 
-/* Preload all images. */
-preload_images().done(function(images) {
-
-    c.drawImage(images[0], 5, 5, 100, 100);
-    c.drawImage(images[1], 105, 5, 100, 100);
-    c.drawImage(images[2], 210, 5, 100, 100);
-
-})
+function render(tFrame) {
+}

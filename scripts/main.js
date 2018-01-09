@@ -44,7 +44,10 @@ let mouse_position = { x: 0, y: 0 }
 var gameData = {
     /* The image files. */
     image_files: [
+        /* The first image is used as the backside of a tile. */
         "images/back.png",
+
+        /* Each tile needs three images. */
         "images/Skull.png",
         "images/Skull.png",
         "images/Skull.png",
@@ -54,8 +57,25 @@ var gameData = {
         "images/House 1.png",
         "images/House 2.png",
         "images/House 3.png"
-    ]
+    ],
+
+    /* Set the update interval in ms. */
+    updateInterval: 200
 };
+
+/* Start loading the images. */
+preloadImages(gameData.image_files).done(function(images) {
+    gameData.back = images.shift();
+    gameData.tiles = [];
+    for (let i = 0; i < images.length; i += 3) {
+        gameData.tiles.push([
+            images.shift(),
+            images.shift(),
+            images.shift()
+        ]);
+    }
+    gameData.imagesLoaded = true;
+});
 
 (function() {
     function main(tFrame) {
@@ -95,35 +115,32 @@ var gameData = {
     gameData.lastRender = gameData.lastUpdate; // Pretend the first
                                                // draw was on first
                                                // update.
-    gameData.updateInterval = 50; // This sets your simulation to run
-                                  // at 20Hz (50ms)
-
     setInitialState();
     main(performance.now()); // Start the cycle
 })();
 
 function setInitialState() {
-    debugger;
-
-    /* Start loading the images. */
-    preloadImages(gameData.image_files).done(function() {
-        gameData.imagesLoaded = true;
-    });
+    pickTiles();
+    placeTiles();
 }
 
 function update(lastUpdate) {
 }
 
 function render(tFrame) {
+    renderTiles();
+    renderGameStats();
 }
 
 /* From http://www.javascriptkit.com/javatutors/preloadimagesplus.shtml */
 function preloadImages(image_files) {
-    let images = [];
     let loaded_images = 0;
     let failed_images = 0;
+    let post_loaded = function() {}
 
-    function image_loaded(image_succeeded) {
+    let images = [];
+
+    function image_loaded(i, image_succeeded) {
         if (image_succeeded) {
             loaded_images++;
         } else {
@@ -131,6 +148,9 @@ function preloadImages(image_files) {
         }
 
         if (loaded_images + failed_images == image_files.length) {
+            if (failed_images > 0) {
+                alert("Some images failed to load");
+            }
             post_loaded(images);
         }
     }
@@ -138,18 +158,18 @@ function preloadImages(image_files) {
     /* Loop over image files and load them. For each specify the
      * `image_loaded` function for the `onload` event to keep track of
      * how many images are already loaded. */
-    for (i = 0; i < image_files.length; i++) {
+    for (let i = 0; i < image_files.length; i++) {
         images.push(new Image())
         images[i].src = image_files[i];
-        images[i].onload = image_loaded(true);
-        images[i].onerror = image_loaded(false);
+        images[i].onload = function(i) { image_loaded(i, true); }
+        images[i].onerror = function(i) { image_loaded(i, false); }
     }
 
     /* Add a `done` method and return the empty function or the
      * function passed into `preloadImages()` function as argument. */
     return {
         done: function(f) {
-            post_loaded = f || function() {};
+            post_loaded = f || post_loaded;
         }
     }
 }

@@ -59,72 +59,116 @@ var gameData = {
         "images/House 3.png"
     ],
 
+    /* The number of cards to use. */
+    numberCards: 2,
+
+    /* The number of images per card. */
+    numberImagesPerCard: 2,
+
+    /* The number of rows. */
+    numberRows: 2,
+
     /* Set the update interval in ms. */
     updateInterval: 200
 };
 
 /* Start loading the images. */
 preloadImages(gameData.image_files).done(function(images) {
+    /* Organize the images. */
     gameData.back = images.shift();
     gameData.tiles = [];
-    for (let i = 0; i < images.length; i += 3) {
+    while (images.length > 0) {
         gameData.tiles.push([
             images.shift(),
             images.shift(),
             images.shift()
         ]);
     }
-    gameData.imagesLoaded = true;
-});
-
-(function() {
-    function main(tFrame) {
-        gameData.stopMain = window.requestAnimationFrame(main);
-        var nextUpdate = gameData.lastUpdate + gameData.updateInterval;
-        var numUpdates = 0;
-
-        /* If tFrame < nextUpdate then 0 ticks need to be updated (0
-         * is default for numUpdates).
-         *
-         * If tFrame = nextUpdate then 1 tick needs to be updated (and
-         * so forth).
-         *
-         * Note: As we mention in summary, you should keep track of
-         * how large numUpdates is.  If it is large, then either your
-         * game was asleep, or the machine cannot keep up.
-         */
-        if (tFrame > nextUpdate) {
-            var timeSinceUpdate = tFrame - gameData.lastUpdate;
-            numUpdates = Math.floor(timeSinceUpdate / gameData.updateInterval);
-        }
-
-        queueUpdates(numUpdates);
-        render(tFrame);
-        gameData.lastRender = tFrame;
-    }
-
-    function queueUpdates(numUpdates) {
-        for(var i = 0; i < numUpdates; i++) {
-            gameData.lastUpdate = gameData.lastUpdate
-                + gameData.updateInterval; // Now lastUpdate is this tick.
-            update(gameData.lastUpdate);
-        }
-    }
 
     gameData.lastUpdate = performance.now();
-    gameData.lastRender = gameData.lastUpdate; // Pretend the first
-                                               // draw was on first
-                                               // update.
+    gameData.lastRender = gameData.lastUpdate;
+
+    /* Initialize the tiles. */
     setInitialState();
-    main(performance.now()); // Start the cycle
-})();
+
+    /* Start the main loop. */
+    mainLoop(performance.now());
+});
 
 function setInitialState() {
+    debugger;
     pickTiles();
     placeTiles();
 }
 
+function pickTiles() {
+    /* First pick the cards. */
+    gameData.cards = [];
+    let temp = [...Array(gameData.tiles.length).keys()];
+    for (let i = 0; i < gameData.numberCards; i++) {
+        /* Pick a card at random. */
+        let cardIndex = temp.splice(Math.floor(Math.random() * temp.length), 1)[0];
+
+        /* Now pick the images for that card. */
+        let temp_images = [...Array(gameData.tiles[cardIndex].length).keys()];
+        for (let j = 0; j < gameData.numberImagesPerCard; j++) {
+            gameData.cards.push([cardIndex,
+                                 temp_images.splice(
+                                     Math.floor(Math.random()
+                                                * temp_images.length), 1)[0]]);
+        }
+    }
+    /* Shuffle the tiles. */
+    shuffleArray(gameData.cards);
+}
+
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        j = Math.floor(Math.random() * (i + 1));
+        let temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+    }
+}
+
+function placeTiles() {
+}
+
+function mainLoop(tFrame) {
+    gameData.stopMain = window.requestAnimationFrame(mainLoop);
+    var nextUpdate = gameData.lastUpdate + gameData.updateInterval;
+    var numUpdates = 0;
+
+    /* If tFrame < nextUpdate then 0 ticks need to be updated (0
+     * is default for numUpdates).
+     *
+     * If tFrame = nextUpdate then 1 tick needs to be updated (and
+     * so forth).
+     *
+     * Note: As we mention in summary, you should keep track of
+     * how large numUpdates is.  If it is large, then either your
+     * game was asleep, or the machine cannot keep up.
+     */
+    if (tFrame > nextUpdate) {
+        var timeSinceUpdate = tFrame - gameData.lastUpdate;
+        numUpdates = Math.floor(timeSinceUpdate / gameData.updateInterval);
+    }
+
+    queueUpdates(numUpdates);
+    render(tFrame);
+    gameData.lastRender = tFrame;
+}
+
+function queueUpdates(numUpdates) {
+    for(var i = 0; i < numUpdates; i++) {
+        gameData.lastUpdate = gameData.lastUpdate
+            + gameData.updateInterval; // Now lastUpdate is this tick.
+        update(gameData.lastUpdate);
+    }
+}
+
 function update(lastUpdate) {
+    flipTiles();
 }
 
 function render(tFrame) {

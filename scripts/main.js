@@ -96,7 +96,6 @@ preloadImages(gameData.image_files).done(function(images) {
 });
 
 function setInitialState() {
-    debugger;
     pickTiles();
     placeTiles();
 }
@@ -112,10 +111,10 @@ function pickTiles() {
         /* Now pick the images for that card. */
         let temp_images = [...Array(gameData.tiles[cardIndex].length).keys()];
         for (let j = 0; j < gameData.numberImagesPerCard; j++) {
-            gameData.cards.push([cardIndex,
-                                 temp_images.splice(
+            gameData.cards.push({card: cardIndex,
+                                 image: temp_images.splice(
                                      Math.floor(Math.random()
-                                                * temp_images.length), 1)[0]]);
+                                                * temp_images.length), 1)[0]});
         }
     }
     /* Shuffle the tiles. */
@@ -132,6 +131,31 @@ function shuffleArray(array) {
 }
 
 function placeTiles() {
+    debugger;
+
+    /* The number of columns. */
+    gameData.numberColumns = Math.floor(gameData.numberCards
+                                        * gameData.numberImagesPerCard
+                                        / gameData.numberRows);
+
+    /* Width and height of a tile. */
+    gameData.x_width = (1000 - 2 * 5
+                        - (gameData.numberColumns - 1) * 5)
+        / gameData.numberColumns;
+    gameData.y_width = (1000 - 2 * 5
+                        - (gameData.numberRows - 1) * 5)
+        / gameData.numberRows;
+
+    /* Since the tiles are in random order, we can loop over them
+     * sequentially and place them on a grid. */
+    for (let i = 0; i < gameData.numberRows; i++) {
+        for (let j = 0; j < gameData.numberColumns; j++) {
+            let temp = gameData.cards[i * gameData.numberColumns + j];
+            temp.x = 5 + j * gameData.x_width + j * 5;
+            temp.y = 5 + i * gameData.y_width + i * 5;
+            temp.hidden = true;
+        }
+    }
 }
 
 function mainLoop(tFrame) {

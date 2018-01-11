@@ -38,7 +38,6 @@
 let c = document.getElementById("canvas")
 let ctx = document.getElementById("canvas").getContext("2d");
 
-let canvas_rect = canvas.getBoundingClientRect();
 let mouse_position = { x: 0, y: 0 }
 
 var gameData = {
@@ -60,7 +59,7 @@ var gameData = {
     ],
 
     /* The number of cards to use. */
-    numberCards: 2,
+    numberCards: 3,
 
     /* The number of images per card. */
     numberImagesPerCard: 2,
@@ -76,9 +75,9 @@ var gameData = {
 preloadImages(gameData.image_files).done(function(images) {
     /* Organize the images. */
     gameData.back = images.shift();
-    gameData.tiles = [];
+    gameData.cards = [];
     while (images.length > 0) {
-        gameData.tiles.push([
+        gameData.cards.push([
             images.shift(),
             images.shift(),
             images.shift()
@@ -96,29 +95,36 @@ preloadImages(gameData.image_files).done(function(images) {
 });
 
 function setInitialState() {
+    intializeGame();
     pickTiles();
     placeTiles();
 }
 
+function initializeGame() {
+    gameData.currentPlayer = 1;
+    gameData.numberOfChosenTiles = 0;
+    gameData.capturedTiles = {1: [], 2: []};
+}
+
 function pickTiles() {
-    /* First pick the cards. */
-    gameData.cards = [];
-    let temp = [...Array(gameData.tiles.length).keys()];
+    /* First pick the tiles. */
+    gameData.tiles = [];
+    let temp = [...Array(gameData.cards.length).keys()];
     for (let i = 0; i < gameData.numberCards; i++) {
         /* Pick a card at random. */
         let cardIndex = temp.splice(Math.floor(Math.random() * temp.length), 1)[0];
 
         /* Now pick the images for that card. */
-        let temp_images = [...Array(gameData.tiles[cardIndex].length).keys()];
+        let temp_images = [...Array(gameData.cards[cardIndex].length).keys()];
         for (let j = 0; j < gameData.numberImagesPerCard; j++) {
-            gameData.cards.push({card: cardIndex,
+            gameData.tiles.push({card: cardIndex,
                                  image: temp_images.splice(
                                      Math.floor(Math.random()
                                                 * temp_images.length), 1)[0]});
         }
     }
     /* Shuffle the tiles. */
-    shuffleArray(gameData.cards);
+    shuffleArray(gameData.tiles);
 }
 
 function shuffleArray(array) {
@@ -131,8 +137,6 @@ function shuffleArray(array) {
 }
 
 function placeTiles() {
-    debugger;
-
     /* The number of columns. */
     gameData.numberColumns = Math.floor(gameData.numberCards
                                         * gameData.numberImagesPerCard
@@ -150,10 +154,11 @@ function placeTiles() {
      * sequentially and place them on a grid. */
     for (let i = 0; i < gameData.numberRows; i++) {
         for (let j = 0; j < gameData.numberColumns; j++) {
-            let temp = gameData.cards[i * gameData.numberColumns + j];
+            let temp = gameData.tiles[i * gameData.numberColumns + j];
             temp.x = 5 + j * gameData.x_width + j * 5;
             temp.y = 5 + i * gameData.y_width + i * 5;
             temp.hidden = true;
+            temp.rendered = false;
         }
     }
 }
@@ -192,12 +197,31 @@ function queueUpdates(numUpdates) {
 }
 
 function update(lastUpdate) {
-    flipTiles();
+    //flipTiles();
+    //updateGameStats();
 }
 
 function render(tFrame) {
     renderTiles();
-    renderGameStats();
+    //renderGameStats();
+}
+
+function renderTiles() {
+    for (let n = 0; n < gameData.tiles.length; n++) {
+        let tile = gameData.tiles[n];
+        let image = gameData.cards[tile.card][tile.image];
+        if (! tile.rendered) {
+            if (tile.hidden) {
+                ctx.drawImage(gameData.back,
+                              tile.x, tile.y,
+                              gameData.x_width, gameData.y_width);
+            } else {
+                ctx.drawImage(image,
+                              tile.x, tile.y,
+                              gameData.x_width, gameData.y_width);
+            }
+        }
+    }
 }
 
 /* From http://www.javascriptkit.com/javatutors/preloadimagesplus.shtml */
@@ -243,8 +267,26 @@ function preloadImages(image_files) {
 }
 
 function get_mouse_position(canvas, event) {
+    let canvas_rect = canvas.getBoundingClientRect();
     return {
-        x: (event.clientX - canvas_rect.left) / (canvas_rect.right - canvas_rect.left) * 1000,
-        y: (event.clientY - canvas_rect.top) / (canvas_rect.bottom - canvas_rect.top) * 1000
+        x: (event.clientX - canvas_rect.left)
+            / (canvas_rect.right - canvas_rect.left) * 1000,
+        y: (event.clientY - canvas_rect.top)
+            / (canvas_rect.bottom - canvas_rect.top) * 1000
+    }
+}
+
+c.onclick = function(e) {
+    mouse_position = get_mouse_position(c, e);
+    for (let n = 0; n < gameData.tiles.length; n++) {
+        if (mouse_position.x >= gameData.tiles[n].x &&
+            mouse_position.x <= gameData.tiles[n].x + gameData.x_width &&
+            mouse_position.y >= gameData.tiles[n].y &&
+            mouse_position.y <= gameData.tiles[n].y + gameData.y_width)
+        {
+            gameData.tiles[n].hidden = !gameData.tiles[n].hidden;
+            gameData.tiles[n].rendered = false;
+            break;
+        }
     }
 }

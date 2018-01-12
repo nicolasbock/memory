@@ -35,8 +35,8 @@
  */
 
 /* Get cavas context. */
-let c = document.getElementById("canvas")
-let ctx = document.getElementById("canvas").getContext("2d");
+let c = document.getElementById("ui-layer")
+let ctx = c.getContext("2d");
 
 let mouse_position = { x: 0, y: 0 }
 

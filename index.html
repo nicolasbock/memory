@@ -7,12 +7,15 @@
   </head>
 
   <body>
-    <h1>Memory</h1>
+    <h1 id="title">Memory</h1>
 
-    <canvas id="canvas" height="1000" width="1000">
-      This game uses HTML 5. Please upgrade your browser...
-    </canvas>
-
+    <div id="stage">
+      <canvas id="ui-layer" width="1000" height="1000"></canvas>
+      <canvas id="game-layer" width="1000" height="1000">
+        This game uses HTML 5. Please upgrade your browser...
+      </canvas>
+    </div>
     <script src="scripts/main.js"></script>
+
   </body>
 </html>

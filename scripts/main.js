@@ -95,15 +95,16 @@ preloadImages(gameData.image_files).done(function(images) {
 });
 
 function setInitialState() {
-    intializeGame();
+    initializeGame();
     pickTiles();
     placeTiles();
 }
 
 function initializeGame() {
     gameData.currentPlayer = 1;
-    gameData.numberOfChosenTiles = 0;
+    gameData.chosenTiles = [];
     gameData.capturedTiles = {1: [], 2: []};
+    gameData.messages = [];
 }
 
 function pickTiles() {
@@ -202,8 +203,14 @@ function update(lastUpdate) {
 }
 
 function render(tFrame) {
+    renderMessages(tFrame);
     renderTiles();
     //renderGameStats();
+}
+
+function renderMessages(tFrame) {
+    for (let i = 0; i < gameData.messages.length; i++) {
+    }
 }
 
 function renderTiles() {
@@ -276,6 +283,29 @@ function get_mouse_position(canvas, event) {
     }
 }
 
+function flipTile(n) {
+    gameData.chosenTiles.push(n);
+    gameData.tiles[n].hidden = !gameData.tiles[n].hidden;
+    gameData.tiles[n].rendered = false;
+
+    if (gameData.chosenTiles.length == gameData.numberImagesPerCard) {
+        let foundMatch = true;
+        for (let i = 0; i < gameData.numberImagesPerCard - 1; i++) {
+            if (gameData.tiles[gameData.chosenTiles[i]].card
+                != gameData.tiles[gameData.chosenTiles[i + 1]].card) {
+                foundMatch = false;
+                break;
+            }
+        }
+
+        if (foundMatch) {
+            gameData.messages.push({message: "Found match!"});
+        } else {
+            gameData.messages.push({message: "The two tiles did not match"});
+        }
+    }
+}
+
 c.onclick = function(e) {
     mouse_position = get_mouse_position(c, e);
     for (let n = 0; n < gameData.tiles.length; n++) {
@@ -284,8 +314,7 @@ c.onclick = function(e) {
             mouse_position.y >= gameData.tiles[n].y &&
             mouse_position.y <= gameData.tiles[n].y + gameData.y_width)
         {
-            gameData.tiles[n].hidden = !gameData.tiles[n].hidden;
-            gameData.tiles[n].rendered = false;
+            flipTile(n);
             break;
         }
     }

@@ -208,8 +208,17 @@ function update(lastUpdate) {
 
 function render(tFrame) {
     renderMessages(tFrame);
-    renderTiles();
-    //renderGameStats();
+    renderTiles(tFrame);
+    renderGameStats(tFrame);
+}
+
+function renderGameStats(tFrame) {
+    contextUI.fillStyle = "black";
+    contextUI.globalAlpha = 1;
+    contextUI.font = "64px serif";
+    contextUI.textAlign = "right";
+    contextUI.textBaseline = "top";
+    contextUI.fillText("Player " + gameData.currentPlayer, 800, 900, 900);
 }
 
 function renderMessages(tFrame) {
@@ -235,7 +244,7 @@ function renderMessages(tFrame) {
     }
 }
 
-function renderTiles() {
+function renderTiles(tFrame) {
     for (let n = 0; n < gameData.tiles.length; n++) {
         let tile = gameData.tiles[n];
         let image = gameData.cards[tile.card][tile.image];

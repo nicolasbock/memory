@@ -35,8 +35,9 @@
  */
 
 /* Get cavas context. */
-let c = document.getElementById("ui-layer")
-let ctx = c.getContext("2d");
+let cUI = document.getElementById("ui-layer")
+let contextUI = cUI.getContext("2d");
+let contextGame = document.getElementById("game-layer").getContext("2d");
 
 let mouse_position = { x: 0, y: 0 }
 
@@ -210,6 +211,23 @@ function render(tFrame) {
 
 function renderMessages(tFrame) {
     for (let i = 0; i < gameData.messages.length; i++) {
+        msg = gameData.messages[i];
+        if (! msg.rendered) {
+            contextUI.fillStyle = "red";
+            contextUI.globalAlpha = 0.6;
+            contextUI.fillRect(25, 100, 950, 100);
+
+            contextUI.fillStyle = "black";
+            contextUI.globalAlpha = 1;
+            contextUI.font = "84px serif";
+            contextUI.textAlign = "center";
+            contextUI.textBaseline = "top";
+            contextUI.fillText(msg.message, 500, 100, 900);
+            msg.rendered = true;
+        }
+        if (tFrame - msg.timestamp > 2000) {
+            gameData.messages.splice(i, 1);
+        }
     }
 }
 
@@ -219,13 +237,13 @@ function renderTiles() {
         let image = gameData.cards[tile.card][tile.image];
         if (! tile.rendered) {
             if (tile.hidden) {
-                ctx.drawImage(gameData.back,
-                              tile.x, tile.y,
-                              gameData.x_width, gameData.y_width);
+                contextGame.drawImage(gameData.back,
+                                      tile.x, tile.y,
+                                      gameData.x_width, gameData.y_width);
             } else {
-                ctx.drawImage(image,
-                              tile.x, tile.y,
-                              gameData.x_width, gameData.y_width);
+                contextGame.drawImage(image,
+                                      tile.x, tile.y,
+                                      gameData.x_width, gameData.y_width);
             }
         }
     }
@@ -283,6 +301,14 @@ function get_mouse_position(canvas, event) {
     }
 }
 
+function message(msg) {
+    gameData.messages.push({
+        message: msg,
+        timestamp: performance.now(),
+        rendered: false
+    });
+}
+
 function flipTile(n) {
     gameData.chosenTiles.push(n);
     gameData.tiles[n].hidden = !gameData.tiles[n].hidden;
@@ -299,22 +325,24 @@ function flipTile(n) {
         }
 
         if (foundMatch) {
-            gameData.messages.push({message: "Found match!"});
+            message("Found match!");
         } else {
-            gameData.messages.push({message: "The two tiles did not match"});
+            message("The two tiles did not match!");
         }
     }
 }
 
-c.onclick = function(e) {
-    mouse_position = get_mouse_position(c, e);
+cUI.onclick = function(e) {
+    mouse_position = get_mouse_position(cUI, e);
     for (let n = 0; n < gameData.tiles.length; n++) {
         if (mouse_position.x >= gameData.tiles[n].x &&
             mouse_position.x <= gameData.tiles[n].x + gameData.x_width &&
             mouse_position.y >= gameData.tiles[n].y &&
             mouse_position.y <= gameData.tiles[n].y + gameData.y_width)
         {
-            flipTile(n);
+            if (gameData.messages.length == 0) {
+                flipTile(n);
+            }
             break;
         }
     }

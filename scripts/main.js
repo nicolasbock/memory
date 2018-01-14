@@ -213,12 +213,22 @@ function render(tFrame) {
 }
 
 function renderGameStats(tFrame) {
-    contextUI.fillStyle = "black";
     contextUI.globalAlpha = 1;
     contextUI.font = "64px serif";
     contextUI.textAlign = "right";
     contextUI.textBaseline = "top";
-    contextUI.fillText("Player " + gameData.currentPlayer, 800, 900, 900);
+    if (gameData.currentPlayer == 1) {
+        contextUI.fillStyle = "green";
+    } else {
+        contextUI.fillStyle = "black";
+    }
+    contextUI.fillText("Player 1: " + gameData.capturedTiles[1].length, 920, 800);
+    if (gameData.currentPlayer == 2) {
+        contextUI.fillStyle = "green";
+    } else {
+        contextUI.fillStyle = "black";
+    }
+    contextUI.fillText("Player 2: " + gameData.capturedTiles[2].length, 920, 900);
 }
 
 function renderMessages(tFrame) {

@@ -69,7 +69,10 @@ var gameData = {
     numberRows: 2,
 
     /* Set the update interval in ms. */
-    updateInterval: 200
+    updateInterval: 200,
+
+    /* The lifetime of a message. */
+    messageTimeout: 2000
 };
 
 /* Start loading the images. */
@@ -225,7 +228,8 @@ function renderMessages(tFrame) {
             contextUI.fillText(msg.message, 500, 100, 900);
             msg.rendered = true;
         }
-        if (tFrame - msg.timestamp > 2000) {
+        if (tFrame - msg.timestamp > gameData.messageTimeout) {
+            contextUI.clearRect(25, 100, 950, 100);
             gameData.messages.splice(i, 1);
         }
     }

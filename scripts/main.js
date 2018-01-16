@@ -109,6 +109,7 @@ function initializeGame() {
     gameData.chosenTiles = [];
     gameData.capturedTiles = {1: 0, 2: 0};
     gameData.messages = [];
+    gameData.numberMoves = 0;
 }
 
 function pickTiles() {
@@ -204,24 +205,37 @@ function queueUpdates(numUpdates) {
 function update(lastUpdate) {
     if (gameData.removeMatch) {
         if (lastUpdate - gameData.removeMatch > 2000) {
+            gameData.numberMoves++;
             gameData.capturedTiles[gameData.currentPlayer]++;
             gameData.tiles[gameData.chosenTiles[0]].image = undefined;
-            gameData.tiles[gameData.chosenTiles[0]].renderd = false;
+            gameData.tiles[gameData.chosenTiles[0]].rendered = false;
             gameData.tiles[gameData.chosenTiles[1]].image = undefined;
-            gameData.tiles[gameData.chosenTiles[1]].renderd = false;
+            gameData.tiles[gameData.chosenTiles[1]].rendered = false;
+            gameData.numberCards--;
             gameData.chosenTiles = [];
-            gameData.currentPlayer = (gameData.currentPlayer + 1) % 2 + 1;
             gameData.removeMatch = undefined;
+
+            if (gameData.numberCards == 0) {
+                message("Game Over!");
+                if (gameData.capturedTiles[1] > gameData.capturedTiles[2]) {
+                    message("Player 1 won the game!");
+                } else if (gameData.capturedTiles[2] > gameData.capturedTiles[1]) {
+                    message("Player 2 won the game!");
+                } else {
+                    message("The game is a tie!");
+                }
+            }
         }
     }
     if (gameData.flipBack) {
         if (lastUpdate - gameData.flipBack > 2000) {
+            gameData.numberMoves++;
             gameData.tiles[gameData.chosenTiles[0]].hidden = true;
-            gameData.tiles[gameData.chosenTiles[0]].renderd = false;
+            gameData.tiles[gameData.chosenTiles[0]].rendered = false;
             gameData.tiles[gameData.chosenTiles[1]].hidden = true;
-            gameData.tiles[gameData.chosenTiles[1]].renderd = false;
+            gameData.tiles[gameData.chosenTiles[1]].rendered = false;
             gameData.chosenTiles = [];
-            gameData.currentPlayer = (gameData.currentPlayer + 1) % 2 + 1;
+            gameData.currentPlayer = gameData.currentPlayer % 2 + 1;
             gameData.flipBack = undefined;
         }
     }
@@ -238,20 +252,23 @@ function renderGamestats(tFrame) {
     contextUI.font = "64px serif";
     contextUI.textAlign = "right";
     contextUI.textBaseline = "top";
+    contextUI.fillStyle = "black";
+    contextUI.clearRect(600, 760, 360, 80);
+    contextUI.fillText("Moves: " + gameData.numberMoves, 960, 760);
     if (gameData.currentPlayer == 1) {
         contextUI.fillStyle = "green";
     } else {
         contextUI.fillStyle = "black";
     }
-    contextUI.clearRect(600, 800, 360, 80);
-    contextUI.fillText("Player 1: " + gameData.capturedTiles[1], 920, 800);
+    contextUI.clearRect(600, 830, 360, 80);
+    contextUI.fillText("Player 1: " + gameData.capturedTiles[1], 960, 830);
     if (gameData.currentPlayer == 2) {
         contextUI.fillStyle = "green";
     } else {
         contextUI.fillStyle = "black";
     }
     contextUI.clearRect(600, 900, 360, 80);
-    contextUI.fillText("Player 2: " + gameData.capturedTiles[2], 920, 900);
+    contextUI.fillText("Player 2: " + gameData.capturedTiles[2], 960, 900);
 }
 
 function renderMessages(tFrame) {
@@ -260,18 +277,20 @@ function renderMessages(tFrame) {
         if (! msg.rendered) {
             contextUI.fillStyle = "red";
             contextUI.globalAlpha = 0.6;
-            contextUI.fillRect(25, 100, 950, 100);
+
+            msg.y = 100 + i * 100;
+            contextUI.fillRect(25, msg.y, 950, 100);
 
             contextUI.fillStyle = "black";
             contextUI.globalAlpha = 1;
             contextUI.font = "84px serif";
             contextUI.textAlign = "center";
             contextUI.textBaseline = "top";
-            contextUI.fillText(msg.message, 500, 100, 900);
+            contextUI.fillText(msg.message, 500, msg.y, 900);
             msg.rendered = true;
         }
         if (tFrame - msg.timestamp > gameData.messageTimeout) {
-            contextUI.clearRect(25, 100, 950, 100);
+            contextUI.clearRect(25, msg.y, 950, 100);
             gameData.messages.splice(i, 1);
         }
     }
@@ -398,9 +417,7 @@ cUI.onclick = function(e) {
             mouse_position.y >= gameData.tiles[n].y &&
             mouse_position.y <= gameData.tiles[n].y + gameData.y_width)
         {
-            if (gameData.messages.length == 0) {
-                flipTile(n);
-            }
+            flipTile(n);
             break;
         }
     }

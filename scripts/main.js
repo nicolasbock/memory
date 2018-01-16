@@ -107,7 +107,7 @@ function setInitialState() {
 function initializeGame() {
     gameData.currentPlayer = 1;
     gameData.chosenTiles = [];
-    gameData.capturedTiles = {1: [], 2: []};
+    gameData.capturedTiles = {1: 0, 2: 0};
     gameData.messages = [];
 }
 
@@ -202,17 +202,38 @@ function queueUpdates(numUpdates) {
 }
 
 function update(lastUpdate) {
-    //flipTiles();
-    //updateGameStats();
+    if (gameData.removeMatch) {
+        if (lastUpdate - gameData.removeMatch > 2000) {
+            gameData.capturedTiles[gameData.currentPlayer]++;
+            gameData.tiles[gameData.chosenTiles[0]].image = undefined;
+            gameData.tiles[gameData.chosenTiles[0]].renderd = false;
+            gameData.tiles[gameData.chosenTiles[1]].image = undefined;
+            gameData.tiles[gameData.chosenTiles[1]].renderd = false;
+            gameData.chosenTiles = [];
+            gameData.currentPlayer = (gameData.currentPlayer + 1) % 2 + 1;
+            gameData.removeMatch = undefined;
+        }
+    }
+    if (gameData.flipBack) {
+        if (lastUpdate - gameData.flipBack > 2000) {
+            gameData.tiles[gameData.chosenTiles[0]].hidden = true;
+            gameData.tiles[gameData.chosenTiles[0]].renderd = false;
+            gameData.tiles[gameData.chosenTiles[1]].hidden = true;
+            gameData.tiles[gameData.chosenTiles[1]].renderd = false;
+            gameData.chosenTiles = [];
+            gameData.currentPlayer = (gameData.currentPlayer + 1) % 2 + 1;
+            gameData.flipBack = undefined;
+        }
+    }
 }
 
 function render(tFrame) {
     renderMessages(tFrame);
     renderTiles(tFrame);
-    renderGameStats(tFrame);
+    renderGamestats(tFrame);
 }
 
-function renderGameStats(tFrame) {
+function renderGamestats(tFrame) {
     contextUI.globalAlpha = 1;
     contextUI.font = "64px serif";
     contextUI.textAlign = "right";
@@ -222,13 +243,15 @@ function renderGameStats(tFrame) {
     } else {
         contextUI.fillStyle = "black";
     }
-    contextUI.fillText("Player 1: " + gameData.capturedTiles[1].length, 920, 800);
+    contextUI.clearRect(600, 800, 360, 80);
+    contextUI.fillText("Player 1: " + gameData.capturedTiles[1], 920, 800);
     if (gameData.currentPlayer == 2) {
         contextUI.fillStyle = "green";
     } else {
         contextUI.fillStyle = "black";
     }
-    contextUI.fillText("Player 2: " + gameData.capturedTiles[2].length, 920, 900);
+    contextUI.clearRect(600, 900, 360, 80);
+    contextUI.fillText("Player 2: " + gameData.capturedTiles[2], 920, 900);
 }
 
 function renderMessages(tFrame) {
@@ -259,15 +282,20 @@ function renderTiles(tFrame) {
         let tile = gameData.tiles[n];
         let image = gameData.cards[tile.card][tile.image];
         if (! tile.rendered) {
-            if (tile.hidden) {
-                contextGame.drawImage(gameData.back,
-                                      tile.x, tile.y,
-                                      gameData.x_width, gameData.y_width);
+            if (image) {
+                if (tile.hidden) {
+                    contextGame.drawImage(gameData.back,
+                                          tile.x, tile.y,
+                                          gameData.x_width, gameData.y_width);
+                } else {
+                    contextGame.drawImage(image,
+                                          tile.x, tile.y,
+                                          gameData.x_width, gameData.y_width);
+                }
             } else {
-                contextGame.drawImage(image,
-                                      tile.x, tile.y,
-                                      gameData.x_width, gameData.y_width);
+                contextGame.clearRect(tile.x, tile.y, gameData.x_width, gameData.y_width);
             }
+            tile.rendered = true;
         }
     }
 }
@@ -349,13 +377,20 @@ function flipTile(n) {
 
         if (foundMatch) {
             message("Found match!");
+            gameData.removeMatch = performance.now();
         } else {
             message("The two tiles did not match!");
+            gameData.flipBack = performance.now();
         }
     }
 }
 
 cUI.onclick = function(e) {
+    /* We will ignore mouse clicks when we show a message. */
+    if (gameData.messages.length > 0) {
+        return;
+    }
+
     mouse_position = get_mouse_position(cUI, e);
     for (let n = 0; n < gameData.tiles.length; n++) {
         if (mouse_position.x >= gameData.tiles[n].x &&

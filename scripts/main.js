@@ -218,9 +218,9 @@ function update(lastUpdate) {
             if (gameData.numberCards == 0) {
                 message("Game Over!");
                 if (gameData.capturedTiles[1] > gameData.capturedTiles[2]) {
-                    message("Player 1 won the game!");
+                    message("Player 1 won the game in " + gameData.numberMoves + " moves!");
                 } else if (gameData.capturedTiles[2] > gameData.capturedTiles[1]) {
-                    message("Player 2 won the game!");
+                    message("Player 2 won the game in " + gameData.numberMoves + " moves!");
                 } else {
                     message("The game is a tie!");
                 }

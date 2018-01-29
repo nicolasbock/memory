@@ -75,8 +75,19 @@ var gameData = {
     messageTimeout: 2000
 };
 
-/* Start loading the images. */
-preloadImages(gameData.image_files).done(function(images) {
+/* Load the images. */
+preloadImages(gameData.image_files).done(images => {
+    /* Organize the images. */
+    organizeImages(images);
+
+    /* Initialize the tiles. */
+    setInitialState();
+
+    /* Start the main loop. */
+    mainLoop(performance.now());
+});
+
+function organizeImages(images) {
     /* Organize the images. */
     gameData.back = images.shift();
     gameData.cards = [];
@@ -87,16 +98,7 @@ preloadImages(gameData.image_files).done(function(images) {
             images.shift()
         ]);
     }
-
-    gameData.lastUpdate = performance.now();
-    gameData.lastRender = gameData.lastUpdate;
-
-    /* Initialize the tiles. */
-    setInitialState();
-
-    /* Start the main loop. */
-    mainLoop(performance.now());
-});
+}
 
 function setInitialState() {
     initializeGame();
@@ -105,6 +107,8 @@ function setInitialState() {
 }
 
 function initializeGame() {
+    gameData.lastUpdate = performance.now();
+    gameData.lastRender = gameData.lastUpdate;
     gameData.currentPlayer = 1;
     gameData.chosenTiles = [];
     gameData.capturedTiles = {1: 0, 2: 0};

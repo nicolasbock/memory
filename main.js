@@ -107,6 +107,8 @@ function setInitialState() {
 }
 
 function initializeGame() {
+    gameData.gameStart = performance.now();
+    gameData.clock = 0;
     gameData.lastUpdate = performance.now();
     gameData.lastRender = gameData.lastUpdate;
     gameData.currentPlayer = 1;
@@ -220,13 +222,13 @@ function update(lastUpdate) {
             gameData.removeMatch = undefined;
 
             if (gameData.numberCards == 0) {
-                message("Game Over!");
+                message("Game Over!", expires = false);
                 if (gameData.capturedTiles[1] > gameData.capturedTiles[2]) {
-                    message("Player 1 won the game in " + gameData.numberMoves + " moves!");
+                    message("Player 1 won the game in " + gameData.numberMoves + " moves!", expires = false);
                 } else if (gameData.capturedTiles[2] > gameData.capturedTiles[1]) {
-                    message("Player 2 won the game in " + gameData.numberMoves + " moves!");
+                    message("Player 2 won the game in " + gameData.numberMoves + " moves!", expires = false);
                 } else {
-                    message("The game is a tie!");
+                    message("The game is a tie!", expires = false);
                 }
             }
         }
@@ -243,6 +245,10 @@ function update(lastUpdate) {
             gameData.flipBack = undefined;
         }
     }
+
+    if (gameData.numberCards > 0) {
+        gameData.clock = Math.round((performance.now() - gameData.gameStart) / 1e3);
+    }
 }
 
 function render(tFrame) {
@@ -251,14 +257,37 @@ function render(tFrame) {
     renderGamestats(tFrame);
 }
 
+function padNumber(number) {
+    if (number.length < 2) {
+        number = "0" + number;
+    }
+    return number;
+}
+
+function timeString(seconds) {
+    let hours = Math.floor(seconds / 3600);
+    seconds = seconds - hours * 3600;
+    let minutes = Math.floor(seconds / 60);
+    seconds = seconds - minutes * 60;
+    let hours_string = new Intl.NumberFormat("en-US").format(hours);
+    let minutes_string = new Intl.NumberFormat("en-US").format(minutes);
+    let seconds_string = new Intl.NumberFormat("en-US").format(seconds);
+    return `${padNumber(hours_string)}:${padNumber(minutes_string)}:${padNumber(seconds_string)}`
+}
+
 function renderGamestats(tFrame) {
     contextUI.globalAlpha = 1;
     contextUI.font = "64px serif";
     contextUI.textAlign = "right";
     contextUI.textBaseline = "top";
     contextUI.fillStyle = "black";
+
+    contextUI.clearRect(600, 690, 360, 80);
+    contextUI.fillText(timeString(gameData.clock), 960, 690);
+
     contextUI.clearRect(600, 760, 360, 80);
     contextUI.fillText("Moves: " + gameData.numberMoves, 960, 760);
+
     if (gameData.currentPlayer == 1) {
         contextUI.fillStyle = "green";
     } else {
@@ -266,6 +295,7 @@ function renderGamestats(tFrame) {
     }
     contextUI.clearRect(600, 830, 360, 80);
     contextUI.fillText("Player 1: " + gameData.capturedTiles[1], 960, 830);
+
     if (gameData.currentPlayer == 2) {
         contextUI.fillStyle = "green";
     } else {
@@ -293,7 +323,7 @@ function renderMessages(tFrame) {
             contextUI.fillText(msg.message, 500, msg.y, 900);
             msg.rendered = true;
         }
-        if (tFrame - msg.timestamp > gameData.messageTimeout) {
+        if (msg.expires && (tFrame - msg.timestamp > gameData.messageTimeout)) {
             contextUI.clearRect(25, msg.y, 950, 100);
             gameData.messages.splice(i, 1);
         }
@@ -375,10 +405,11 @@ function get_mouse_position(canvas, event) {
     }
 }
 
-function message(msg) {
+function message(msg, expires = true) {
     gameData.messages.push({
         message: msg,
         timestamp: performance.now(),
+        expires: expires,
         rendered: false
     });
 }

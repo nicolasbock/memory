@@ -380,6 +380,10 @@ function message(msg) {
 }
 
 function flipTile(n) {
+    if (gameData.chosenTiles.includes(n)) {
+        return;
+    }
+
     gameData.chosenTiles.push(n);
     gameData.tiles[n].hidden = !gameData.tiles[n].hidden;
     gameData.tiles[n].rendered = false;

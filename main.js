@@ -323,6 +323,8 @@ function renderMessages(tFrame) {
             contextUI.fillText(msg.message, 500, msg.y, 900);
             msg.rendered = true;
         }
+
+        /* Only remove messages that can expire. */
         if (msg.expires && (tFrame - msg.timestamp > gameData.messageTimeout)) {
             contextUI.clearRect(25, msg.y, 950, 100);
             gameData.messages.splice(i, 1);

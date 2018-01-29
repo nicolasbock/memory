@@ -222,13 +222,13 @@ function update(lastUpdate) {
             gameData.removeMatch = undefined;
 
             if (gameData.numberCards == 0) {
-                message("Game Over!");
+                message("Game Over!", expires = false);
                 if (gameData.capturedTiles[1] > gameData.capturedTiles[2]) {
-                    message("Player 1 won the game in " + gameData.numberMoves + " moves!");
+                    message("Player 1 won the game in " + gameData.numberMoves + " moves!", expires = false);
                 } else if (gameData.capturedTiles[2] > gameData.capturedTiles[1]) {
-                    message("Player 2 won the game in " + gameData.numberMoves + " moves!");
+                    message("Player 2 won the game in " + gameData.numberMoves + " moves!", expires = false);
                 } else {
-                    message("The game is a tie!");
+                    message("The game is a tie!", expires = false);
                 }
             }
         }
@@ -323,7 +323,7 @@ function renderMessages(tFrame) {
             contextUI.fillText(msg.message, 500, msg.y, 900);
             msg.rendered = true;
         }
-        if (tFrame - msg.timestamp > gameData.messageTimeout) {
+        if (msg.expires && (tFrame - msg.timestamp > gameData.messageTimeout)) {
             contextUI.clearRect(25, msg.y, 950, 100);
             gameData.messages.splice(i, 1);
         }
@@ -405,10 +405,11 @@ function get_mouse_position(canvas, event) {
     }
 }
 
-function message(msg) {
+function message(msg, expires = true) {
     gameData.messages.push({
         message: msg,
         timestamp: performance.now(),
+        expires: expires,
         rendered: false
     });
 }

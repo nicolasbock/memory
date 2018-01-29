@@ -246,7 +246,9 @@ function update(lastUpdate) {
         }
     }
 
-    gameData.clock = Math.round((performance.now() - gameData.gameStart) / 1e6);
+    if (gameData.numberCards > 0) {
+        gameData.clock = Math.round((performance.now() - gameData.gameStart) / 1e3);
+    }
 }
 
 function render(tFrame) {
@@ -255,8 +257,22 @@ function render(tFrame) {
     renderGamestats(tFrame);
 }
 
+function padNumber(number) {
+    if (number.length < 2) {
+        number = "0" + number;
+    }
+    return number;
+}
+
 function timeString(seconds) {
-    return "00:00"
+    let hours = Math.floor(seconds / 3600);
+    seconds = seconds - hours * 3600;
+    let minutes = Math.floor(seconds / 60);
+    seconds = seconds - minutes * 60;
+    let hours_string = new Intl.NumberFormat("en-US").format(hours);
+    let minutes_string = new Intl.NumberFormat("en-US").format(minutes);
+    let seconds_string = new Intl.NumberFormat("en-US").format(seconds);
+    return `${padNumber(hours_string)}:${padNumber(minutes_string)}:${padNumber(seconds_string)}`
 }
 
 function renderGamestats(tFrame) {

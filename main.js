@@ -107,6 +107,8 @@ function setInitialState() {
 }
 
 function initializeGame() {
+    gameData.gameStart = performance.now();
+    gameData.clock = 0;
     gameData.lastUpdate = performance.now();
     gameData.lastRender = gameData.lastUpdate;
     gameData.currentPlayer = 1;
@@ -243,6 +245,8 @@ function update(lastUpdate) {
             gameData.flipBack = undefined;
         }
     }
+
+    gameData.clock = Math.round((performance.now() - gameData.gameStart) / 1e6);
 }
 
 function render(tFrame) {
@@ -251,14 +255,23 @@ function render(tFrame) {
     renderGamestats(tFrame);
 }
 
+function timeString(seconds) {
+    return "00:00"
+}
+
 function renderGamestats(tFrame) {
     contextUI.globalAlpha = 1;
     contextUI.font = "64px serif";
     contextUI.textAlign = "right";
     contextUI.textBaseline = "top";
     contextUI.fillStyle = "black";
+
+    contextUI.clearRect(600, 690, 360, 80);
+    contextUI.fillText(timeString(gameData.clock), 960, 690);
+
     contextUI.clearRect(600, 760, 360, 80);
     contextUI.fillText("Moves: " + gameData.numberMoves, 960, 760);
+
     if (gameData.currentPlayer == 1) {
         contextUI.fillStyle = "green";
     } else {
@@ -266,6 +279,7 @@ function renderGamestats(tFrame) {
     }
     contextUI.clearRect(600, 830, 360, 80);
     contextUI.fillText("Player 1: " + gameData.capturedTiles[1], 960, 830);
+
     if (gameData.currentPlayer == 2) {
         contextUI.fillStyle = "green";
     } else {

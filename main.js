@@ -1,37 +1,4 @@
 /* https://developer.mozilla.org/en-US/docs/Games/Anatomy
- *
- * gameData.lastRender
- *     keeps track of the last provided requestAnimationFrame
- *     timestamp.
- * gameData.lastUpdate
- *     keeps track of the last update time. Always increments by
- *     updateInterval.
- * gameData.updateInterval
- *     is how frequently the game state updates.
- *
- * timeSinceUpdate
- *     is the time between requestAnimationFrame callback and last
- *     update.
- * numUpdates
- *     is how many updates should have happened between these two
- *     rendered frames.
- *
- * render()
- *     is passed tFrame because it is assumed that the render method
- *     will calculate how long it has been since the most recently
- *     passed update for extrapolation (purely cosmetic for fast
- *     devices). It draws the scene.
- *
- * update()
- *     calculates the game state as of a given point in time. It
- *     should always increment by updateInterval. It is the authority for
- *     game state. It is passed the DOMHighResTimeStamp for the time
- *     it represents (which, again, is always last update +
- *     gameData.updateInterval unless a pause feature is added, etc.)
- *
- * setInitialState()
- *     Performs whatever tasks are leftover before the mainloop must
- *     run.
  */
 
 /* Get cavas context. */
@@ -135,6 +102,7 @@ function pickTiles() {
                                                 * temp_images.length), 1)[0]});
         }
     }
+
     /* Shuffle the tiles. */
     shuffleArray(gameData.tiles);
 }
@@ -180,16 +148,6 @@ function mainLoop(tFrame) {
     var nextUpdate = gameData.lastUpdate + gameData.updateInterval;
     var numUpdates = 0;
 
-    /* If tFrame < nextUpdate then 0 ticks need to be updated (0
-     * is default for numUpdates).
-     *
-     * If tFrame = nextUpdate then 1 tick needs to be updated (and
-     * so forth).
-     *
-     * Note: As we mention in summary, you should keep track of
-     * how large numUpdates is.  If it is large, then either your
-     * game was asleep, or the machine cannot keep up.
-     */
     if (tFrame > nextUpdate) {
         var timeSinceUpdate = tFrame - gameData.lastUpdate;
         numUpdates = Math.floor(timeSinceUpdate / gameData.updateInterval);
@@ -203,7 +161,7 @@ function mainLoop(tFrame) {
 function queueUpdates(numUpdates) {
     for(var i = 0; i < numUpdates; i++) {
         gameData.lastUpdate = gameData.lastUpdate
-            + gameData.updateInterval; // Now lastUpdate is this tick.
+            + gameData.updateInterval;
         update(gameData.lastUpdate);
     }
 }
@@ -211,44 +169,53 @@ function queueUpdates(numUpdates) {
 function update(lastUpdate) {
     if (gameData.removeMatch) {
         if (lastUpdate - gameData.removeMatch > 2000) {
-            gameData.numberMoves++;
-            gameData.capturedTiles[gameData.currentPlayer]++;
-            gameData.tiles[gameData.chosenTiles[0]].image = undefined;
-            gameData.tiles[gameData.chosenTiles[0]].rendered = false;
-            gameData.tiles[gameData.chosenTiles[1]].image = undefined;
-            gameData.tiles[gameData.chosenTiles[1]].rendered = false;
-            gameData.numberCards--;
-            gameData.chosenTiles = [];
-            gameData.removeMatch = undefined;
-
-            if (gameData.numberCards == 0) {
-                message("Game Over!", expires = false);
-                if (gameData.capturedTiles[1] > gameData.capturedTiles[2]) {
-                    message("Player 1 won the game in " + gameData.numberMoves + " moves!", expires = false);
-                } else if (gameData.capturedTiles[2] > gameData.capturedTiles[1]) {
-                    message("Player 2 won the game in " + gameData.numberMoves + " moves!", expires = false);
-                } else {
-                    message("The game is a tie!", expires = false);
-                }
-            }
+            removeMatch();
         }
     }
-    if (gameData.flipBack) {
+
+    else if (gameData.flipBack) {
         if (lastUpdate - gameData.flipBack > 2000) {
-            gameData.numberMoves++;
-            gameData.tiles[gameData.chosenTiles[0]].hidden = true;
-            gameData.tiles[gameData.chosenTiles[0]].rendered = false;
-            gameData.tiles[gameData.chosenTiles[1]].hidden = true;
-            gameData.tiles[gameData.chosenTiles[1]].rendered = false;
-            gameData.chosenTiles = [];
-            gameData.currentPlayer = gameData.currentPlayer % 2 + 1;
-            gameData.flipBack = undefined;
+            flipBack();
         }
     }
 
     if (gameData.numberCards > 0) {
         gameData.clock = Math.round((performance.now() - gameData.gameStart) / 1e3);
     }
+}
+
+function removeMatch() {
+    gameData.numberMoves++;
+    gameData.capturedTiles[gameData.currentPlayer]++;
+    gameData.tiles[gameData.chosenTiles[0]].image = undefined;
+    gameData.tiles[gameData.chosenTiles[0]].rendered = false;
+    gameData.tiles[gameData.chosenTiles[1]].image = undefined;
+    gameData.tiles[gameData.chosenTiles[1]].rendered = false;
+    gameData.numberCards--;
+    gameData.chosenTiles = [];
+    gameData.removeMatch = undefined;
+
+    if (gameData.numberCards == 0) {
+        message("Game Over!", expires = false);
+        if (gameData.capturedTiles[1] > gameData.capturedTiles[2]) {
+            message("Player 1 won the game in " + gameData.numberMoves + " moves!", expires = false);
+        } else if (gameData.capturedTiles[2] > gameData.capturedTiles[1]) {
+            message("Player 2 won the game in " + gameData.numberMoves + " moves!", expires = false);
+        } else {
+            message("The game is a tie!", expires = false);
+        }
+    }
+}
+
+function flipBack() {
+    gameData.numberMoves++;
+    gameData.tiles[gameData.chosenTiles[0]].hidden = true;
+    gameData.tiles[gameData.chosenTiles[0]].rendered = false;
+    gameData.tiles[gameData.chosenTiles[1]].hidden = true;
+    gameData.tiles[gameData.chosenTiles[1]].rendered = false;
+    gameData.chosenTiles = [];
+    gameData.currentPlayer = gameData.currentPlayer % 2 + 1;
+    gameData.flipBack = undefined;
 }
 
 function render(tFrame) {

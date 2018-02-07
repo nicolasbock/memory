@@ -4,6 +4,8 @@
 /* Get cavas context. */
 let cUI = document.getElementById("ui-layer")
 let contextUI = cUI.getContext("2d");
+let contextStats = document.getElementById("stats-layer").getContext("2d");
+let contextMessages = document.getElementById("messages-layer").getContext("2d");
 let contextGame = document.getElementById("game-layer").getContext("2d");
 
 let mouse_position = { x: 0, y: 0 }
@@ -243,57 +245,57 @@ function timeString(seconds) {
 }
 
 function renderGamestats(tFrame) {
-    contextUI.globalAlpha = 1;
-    contextUI.font = "64px serif";
-    contextUI.textAlign = "right";
-    contextUI.textBaseline = "top";
-    contextUI.fillStyle = "black";
+    contextStats.globalAlpha = 1;
+    contextStats.font = "64px serif";
+    contextStats.textAlign = "right";
+    contextStats.textBaseline = "top";
+    contextStats.fillStyle = "black";
 
-    contextUI.clearRect(600, 690, 360, 80);
-    contextUI.fillText(timeString(gameData.clock), 960, 690);
+    contextStats.clearRect(600, 690, 360, 80);
+    contextStats.fillText(timeString(gameData.clock), 960, 690);
 
-    contextUI.clearRect(600, 760, 360, 80);
-    contextUI.fillText("Moves: " + gameData.numberMoves, 960, 760);
+    contextStats.clearRect(600, 760, 360, 80);
+    contextStats.fillText("Moves: " + gameData.numberMoves, 960, 760);
 
     if (gameData.currentPlayer == 1) {
-        contextUI.fillStyle = "green";
+        contextStats.fillStyle = "green";
     } else {
-        contextUI.fillStyle = "black";
+        contextStats.fillStyle = "black";
     }
-    contextUI.clearRect(600, 830, 360, 80);
-    contextUI.fillText("Player 1: " + gameData.capturedTiles[1], 960, 830);
+    contextStats.clearRect(600, 830, 360, 80);
+    contextStats.fillText("Player 1: " + gameData.capturedTiles[1], 960, 830);
 
     if (gameData.currentPlayer == 2) {
-        contextUI.fillStyle = "green";
+        contextStats.fillStyle = "green";
     } else {
-        contextUI.fillStyle = "black";
+        contextStats.fillStyle = "black";
     }
-    contextUI.clearRect(600, 900, 360, 80);
-    contextUI.fillText("Player 2: " + gameData.capturedTiles[2], 960, 900);
+    contextStats.clearRect(600, 900, 360, 80);
+    contextStats.fillText("Player 2: " + gameData.capturedTiles[2], 960, 900);
 }
 
 function renderMessages(tFrame) {
     for (let i = 0; i < gameData.messages.length; i++) {
         msg = gameData.messages[i];
         if (! msg.rendered) {
-            contextUI.fillStyle = "red";
-            contextUI.globalAlpha = 0.6;
+            contextMessages.fillStyle = "red";
+            contextMessages.globalAlpha = 0.6;
 
             msg.y = 100 + i * 100;
-            contextUI.fillRect(25, msg.y, 950, 100);
+            contextMessages.fillRect(25, msg.y, 950, 100);
 
-            contextUI.fillStyle = "black";
-            contextUI.globalAlpha = 1;
-            contextUI.font = "84px serif";
-            contextUI.textAlign = "center";
-            contextUI.textBaseline = "top";
-            contextUI.fillText(msg.message, 500, msg.y, 900);
+            contextMessages.fillStyle = "black";
+            contextMessages.globalAlpha = 1;
+            contextMessages.font = "84px serif";
+            contextMessages.textAlign = "center";
+            contextMessages.textBaseline = "top";
+            contextMessages.fillText(msg.message, 500, msg.y, 900);
             msg.rendered = true;
         }
 
         /* Only remove messages that can expire. */
         if (msg.expires && (tFrame - msg.timestamp > gameData.messageTimeout)) {
-            contextUI.clearRect(25, msg.y, 950, 100);
+            contextMessages.clearRect(25, msg.y, 950, 100);
             gameData.messages.splice(i, 1);
         }
     }

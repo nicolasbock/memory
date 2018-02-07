@@ -1,42 +1,11 @@
 /* https://developer.mozilla.org/en-US/docs/Games/Anatomy
- *
- * gameData.lastRender
- *     keeps track of the last provided requestAnimationFrame
- *     timestamp.
- * gameData.lastUpdate
- *     keeps track of the last update time. Always increments by
- *     updateInterval.
- * gameData.updateInterval
- *     is how frequently the game state updates.
- *
- * timeSinceUpdate
- *     is the time between requestAnimationFrame callback and last
- *     update.
- * numUpdates
- *     is how many updates should have happened between these two
- *     rendered frames.
- *
- * render()
- *     is passed tFrame because it is assumed that the render method
- *     will calculate how long it has been since the most recently
- *     passed update for extrapolation (purely cosmetic for fast
- *     devices). It draws the scene.
- *
- * update()
- *     calculates the game state as of a given point in time. It
- *     should always increment by updateInterval. It is the authority for
- *     game state. It is passed the DOMHighResTimeStamp for the time
- *     it represents (which, again, is always last update +
- *     gameData.updateInterval unless a pause feature is added, etc.)
- *
- * setInitialState()
- *     Performs whatever tasks are leftover before the mainloop must
- *     run.
  */
 
 /* Get cavas context. */
 let cUI = document.getElementById("ui-layer")
 let contextUI = cUI.getContext("2d");
+let contextStats = document.getElementById("stats-layer").getContext("2d");
+let contextMessages = document.getElementById("messages-layer").getContext("2d");
 let contextGame = document.getElementById("game-layer").getContext("2d");
 
 let mouse_position = { x: 0, y: 0 }
@@ -135,6 +104,7 @@ function pickTiles() {
                                                 * temp_images.length), 1)[0]});
         }
     }
+
     /* Shuffle the tiles. */
     shuffleArray(gameData.tiles);
 }
@@ -180,16 +150,6 @@ function mainLoop(tFrame) {
     var nextUpdate = gameData.lastUpdate + gameData.updateInterval;
     var numUpdates = 0;
 
-    /* If tFrame < nextUpdate then 0 ticks need to be updated (0
-     * is default for numUpdates).
-     *
-     * If tFrame = nextUpdate then 1 tick needs to be updated (and
-     * so forth).
-     *
-     * Note: As we mention in summary, you should keep track of
-     * how large numUpdates is.  If it is large, then either your
-     * game was asleep, or the machine cannot keep up.
-     */
     if (tFrame > nextUpdate) {
         var timeSinceUpdate = tFrame - gameData.lastUpdate;
         numUpdates = Math.floor(timeSinceUpdate / gameData.updateInterval);
@@ -203,7 +163,7 @@ function mainLoop(tFrame) {
 function queueUpdates(numUpdates) {
     for(var i = 0; i < numUpdates; i++) {
         gameData.lastUpdate = gameData.lastUpdate
-            + gameData.updateInterval; // Now lastUpdate is this tick.
+            + gameData.updateInterval;
         update(gameData.lastUpdate);
     }
 }
@@ -211,44 +171,53 @@ function queueUpdates(numUpdates) {
 function update(lastUpdate) {
     if (gameData.removeMatch) {
         if (lastUpdate - gameData.removeMatch > 2000) {
-            gameData.numberMoves++;
-            gameData.capturedTiles[gameData.currentPlayer]++;
-            gameData.tiles[gameData.chosenTiles[0]].image = undefined;
-            gameData.tiles[gameData.chosenTiles[0]].rendered = false;
-            gameData.tiles[gameData.chosenTiles[1]].image = undefined;
-            gameData.tiles[gameData.chosenTiles[1]].rendered = false;
-            gameData.numberCards--;
-            gameData.chosenTiles = [];
-            gameData.removeMatch = undefined;
-
-            if (gameData.numberCards == 0) {
-                message("Game Over!", expires = false);
-                if (gameData.capturedTiles[1] > gameData.capturedTiles[2]) {
-                    message("Player 1 won the game in " + gameData.numberMoves + " moves!", expires = false);
-                } else if (gameData.capturedTiles[2] > gameData.capturedTiles[1]) {
-                    message("Player 2 won the game in " + gameData.numberMoves + " moves!", expires = false);
-                } else {
-                    message("The game is a tie!", expires = false);
-                }
-            }
+            removeMatch();
         }
     }
-    if (gameData.flipBack) {
+
+    else if (gameData.flipBack) {
         if (lastUpdate - gameData.flipBack > 2000) {
-            gameData.numberMoves++;
-            gameData.tiles[gameData.chosenTiles[0]].hidden = true;
-            gameData.tiles[gameData.chosenTiles[0]].rendered = false;
-            gameData.tiles[gameData.chosenTiles[1]].hidden = true;
-            gameData.tiles[gameData.chosenTiles[1]].rendered = false;
-            gameData.chosenTiles = [];
-            gameData.currentPlayer = gameData.currentPlayer % 2 + 1;
-            gameData.flipBack = undefined;
+            flipBack();
         }
     }
 
     if (gameData.numberCards > 0) {
         gameData.clock = Math.round((performance.now() - gameData.gameStart) / 1e3);
     }
+}
+
+function removeMatch() {
+    gameData.numberMoves++;
+    gameData.capturedTiles[gameData.currentPlayer]++;
+    gameData.tiles[gameData.chosenTiles[0]].image = undefined;
+    gameData.tiles[gameData.chosenTiles[0]].rendered = false;
+    gameData.tiles[gameData.chosenTiles[1]].image = undefined;
+    gameData.tiles[gameData.chosenTiles[1]].rendered = false;
+    gameData.numberCards--;
+    gameData.chosenTiles = [];
+    gameData.removeMatch = undefined;
+
+    if (gameData.numberCards == 0) {
+        message("Game Over!", expires = false);
+        if (gameData.capturedTiles[1] > gameData.capturedTiles[2]) {
+            message("Player 1 won the game in " + gameData.numberMoves + " moves!", expires = false);
+        } else if (gameData.capturedTiles[2] > gameData.capturedTiles[1]) {
+            message("Player 2 won the game in " + gameData.numberMoves + " moves!", expires = false);
+        } else {
+            message("The game is a tie!", expires = false);
+        }
+    }
+}
+
+function flipBack() {
+    gameData.numberMoves++;
+    gameData.tiles[gameData.chosenTiles[0]].hidden = true;
+    gameData.tiles[gameData.chosenTiles[0]].rendered = false;
+    gameData.tiles[gameData.chosenTiles[1]].hidden = true;
+    gameData.tiles[gameData.chosenTiles[1]].rendered = false;
+    gameData.chosenTiles = [];
+    gameData.currentPlayer = gameData.currentPlayer % 2 + 1;
+    gameData.flipBack = undefined;
 }
 
 function render(tFrame) {
@@ -276,57 +245,57 @@ function timeString(seconds) {
 }
 
 function renderGamestats(tFrame) {
-    contextUI.globalAlpha = 1;
-    contextUI.font = "64px serif";
-    contextUI.textAlign = "right";
-    contextUI.textBaseline = "top";
-    contextUI.fillStyle = "black";
+    contextStats.globalAlpha = 1;
+    contextStats.font = "64px serif";
+    contextStats.textAlign = "right";
+    contextStats.textBaseline = "top";
+    contextStats.fillStyle = "black";
 
-    contextUI.clearRect(600, 690, 360, 80);
-    contextUI.fillText(timeString(gameData.clock), 960, 690);
+    contextStats.clearRect(600, 690, 360, 80);
+    contextStats.fillText(timeString(gameData.clock), 960, 690);
 
-    contextUI.clearRect(600, 760, 360, 80);
-    contextUI.fillText("Moves: " + gameData.numberMoves, 960, 760);
+    contextStats.clearRect(600, 760, 360, 80);
+    contextStats.fillText("Moves: " + gameData.numberMoves, 960, 760);
 
     if (gameData.currentPlayer == 1) {
-        contextUI.fillStyle = "green";
+        contextStats.fillStyle = "green";
     } else {
-        contextUI.fillStyle = "black";
+        contextStats.fillStyle = "black";
     }
-    contextUI.clearRect(600, 830, 360, 80);
-    contextUI.fillText("Player 1: " + gameData.capturedTiles[1], 960, 830);
+    contextStats.clearRect(600, 830, 360, 80);
+    contextStats.fillText("Player 1: " + gameData.capturedTiles[1], 960, 830);
 
     if (gameData.currentPlayer == 2) {
-        contextUI.fillStyle = "green";
+        contextStats.fillStyle = "green";
     } else {
-        contextUI.fillStyle = "black";
+        contextStats.fillStyle = "black";
     }
-    contextUI.clearRect(600, 900, 360, 80);
-    contextUI.fillText("Player 2: " + gameData.capturedTiles[2], 960, 900);
+    contextStats.clearRect(600, 900, 360, 80);
+    contextStats.fillText("Player 2: " + gameData.capturedTiles[2], 960, 900);
 }
 
 function renderMessages(tFrame) {
     for (let i = 0; i < gameData.messages.length; i++) {
         msg = gameData.messages[i];
         if (! msg.rendered) {
-            contextUI.fillStyle = "red";
-            contextUI.globalAlpha = 0.6;
+            contextMessages.fillStyle = "red";
+            contextMessages.globalAlpha = 0.6;
 
             msg.y = 100 + i * 100;
-            contextUI.fillRect(25, msg.y, 950, 100);
+            contextMessages.fillRect(25, msg.y, 950, 100);
 
-            contextUI.fillStyle = "black";
-            contextUI.globalAlpha = 1;
-            contextUI.font = "84px serif";
-            contextUI.textAlign = "center";
-            contextUI.textBaseline = "top";
-            contextUI.fillText(msg.message, 500, msg.y, 900);
+            contextMessages.fillStyle = "black";
+            contextMessages.globalAlpha = 1;
+            contextMessages.font = "84px serif";
+            contextMessages.textAlign = "center";
+            contextMessages.textBaseline = "top";
+            contextMessages.fillText(msg.message, 500, msg.y, 900);
             msg.rendered = true;
         }
 
         /* Only remove messages that can expire. */
         if (msg.expires && (tFrame - msg.timestamp > gameData.messageTimeout)) {
-            contextUI.clearRect(25, msg.y, 950, 100);
+            contextMessages.clearRect(25, msg.y, 950, 100);
             gameData.messages.splice(i, 1);
         }
     }

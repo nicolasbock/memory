@@ -17,12 +17,20 @@
     position: absolute;
 }
 
-#ui-layer {
+#game-layer {
+    z-index: 1;
+}
+
+#stats-layer {
     z-index: 2;
 }
 
-#game-layer {
-    z-index: 1;
+#messages-layer {
+    z-index: 3;
+}
+
+#ui-layer {
+    z-index: 4;
 }
 
 #footer {
